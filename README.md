@@ -116,6 +116,50 @@ curl -s localhost:8080/hooks/foo-to-calendar/test \
   `<uid>.ics`>` with `Content-Type: text/calendar`, `If-None-Match: *`.
   A 412 (UID already exists) is treated as success, so retries/replays are
   idempotent. Works with Baikal, Nextcloud, Radicale, ...
+- **`kind: smtp`** — sends the mapped payload as an email. Connection
+  properties are service config (`host`, `port`, `from`, `tls: none |
+  starttls | tls`, optional `to` fallback recipient, `basic` auth); the
+  payload is the message: `to` (string or array), `subject`, `text` and/or
+  `html`. With no body field, the whole payload is pretty-printed as the
+  text body. The flow `endpoint` overrides the recipient. Header values are
+  CRLF-stripped to prevent header injection.
+- **`kind: mqtt`** — publishes the mapped payload as JSON to a topic.
+  Service config: `broker` (`tcp://` or `ssl://`), optional `topic`
+  fallback, `client_id` (default `bifrost`), `qos` (default 1), `retain`,
+  anonymous or `basic` credentials, and `insecure_tls` for self-signed
+  brokers. The flow `endpoint` is the topic — including JSONata-produced
+  topics (e.g. `"alerts/" & $.severity`).
+
+Adapters are deliberately dumb *codecs for a wire format*, not per-service
+APIs: everything about which API you call and what objects get sent lives in
+the flow mapping. If an integration can't be expressed with `http`, `smtp`
+or `mqtt`, that's when a new adapter earns its place (`kind` is the
+extension point — see `internal/deliver/`).
+
+Example: high-priority Push events as email via SMTP:
+
+```yaml
+services:
+  plane:
+    from:
+      auth: {type: hmac, header: X-Plane-Signature, secret_env: PLANE_WEBHOOK_SECRET, prefix: "sha256="}
+  mail:
+    to:
+      kind: smtp
+      host: smtp.internal
+      from: plane-alerts@internal
+      to: james@internal
+flows:
+  plane-urgent-mail:
+    from: {service: plane}
+    to: {service: mail}
+    when: $.event = "issue.updated" and $.issue.priority.name = "Urgent"
+    map: |
+      {
+        "subject": "Urgent: " & $.issue.title,
+        "text": "Updated to " & $.issue.state.name & " by " & $.issue.assignees[0].name
+      }
+```
 
 Retries: first try + `attempts-1` retries with exponential backoff (0.5s base)
 on network errors and 5xx only. 4xx responses fail the delivery — that's a

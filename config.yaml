@@ -32,6 +32,34 @@ services:
   #     timeout: 10s
   #     attempts: 3                # first try + retries on 5xx/network errors
 
+  # ---- SMTP target: relay an email (host/from are config; the mapped      --
+  #      payload is the message: to/subject/text or html) -------------------
+  # mail:
+  #   to:
+  #     kind: smtp
+  #     host: smtp.internal         # your relay (e.g. Mailrise, postfix, Gmail relay)
+  #     port: 587                   # optional, default 587 (465 when tls: tls)
+  #     from: bifrost@internal
+  #     to: ops@internal            # fallback recipient if the payload has none
+  #     tls: starttls               # none | starttls | tls (implicit, port 465)
+  #     auth:
+  #       type: basic
+  #       username_env: SMTP_USER
+  #       password_env: SMTP_PASS
+
+  # ---- MQTT target: publish the mapped payload (JSON) to a topic ----------
+  # bus:
+  #   to:
+  #     kind: mqtt
+  #     broker: tcp://mosquitto.internal:1883   # ssl://host:8883 for TLS
+  #     topic: alerts/demo          # fallback topic if the flow endpoint is unset
+  #     qos: 1
+  #     retain: false
+  #     auth:                       # omit for anonymous brokers
+  #       type: basic
+  #       username_env: MQTT_USER
+  #       password_env: MQTT_PASS
+
   # ---- Generic HTTP target: -------------------------------------------------
   # ntfy:
   #   to:

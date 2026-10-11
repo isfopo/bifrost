@@ -64,6 +64,21 @@ type ToService struct {
 	Timeout  string            `yaml:"timeout"`  // e.g. 10s (default: 10s)
 	Attempts int               `yaml:"attempts"` // delivery attempts incl. first (default: 3)
 	timeout  time.Duration
+
+	// --- kind: smtp ---
+	Host    string `yaml:"host"` // SMTP relay address (required)
+	Port    int    `yaml:"port"` // default 587 (465 when tls: tls)
+	From    string `yaml:"from"` // envelope From / From: header (required)
+	TLSMode string `yaml:"tls"`  // none | starttls (default) | tls (implicit)
+	To      string `yaml:"to"`   // fallback recipient if the payload has none
+
+	// --- kind: mqtt ---
+	Broker      string `yaml:"broker"`       // e.g. tcp://mosquitto:1883 or ssl://host:8883 (required)
+	ClientID    string `yaml:"client_id"`    // default "bifrost"
+	Topic       string `yaml:"topic"`        // fallback topic if the flow endpoint is unset
+	QoS         int    `yaml:"qos"`          // QoS level, default 1 (0 is treated as unset)
+	Retain      bool   `yaml:"retain"`       // publish with retain flag
+	InsecureTLS bool   `yaml:"insecure_tls"` // skip TLS certificate verification (mqtt broker / smtp peer)
 }
 
 // TimeoutDuration returns the parsed outbound timeout.
@@ -170,6 +185,36 @@ func (c *Config) validate(path string) error {
 				}
 				if t.Kind == "caldav" && t.BaseURL == "" {
 					return fmt.Errorf("%s: service %q: caldav target needs base_url", path, name)
+				}
+			case "smtp":
+				if t.Host == "" || t.From == "" {
+					return fmt.Errorf("%s: service %q: smtp target needs host and from", path, name)
+				}
+				switch t.TLSMode {
+				case "":
+					t.TLSMode = "starttls"
+				case "none", "starttls", "tls":
+				default:
+					return fmt.Errorf("%s: service %q: smtp tls must be none, starttls or tls", path, name)
+				}
+				if t.Port == 0 {
+					t.Port = 465
+					if t.TLSMode != "tls" {
+						t.Port = 587
+					}
+				}
+			case "mqtt":
+				if t.Broker == "" {
+					return fmt.Errorf("%s: service %q: mqtt target needs broker", path, name)
+				}
+				if t.QoS < 0 || t.QoS > 2 {
+					return fmt.Errorf("%s: service %q: mqtt qos must be 0, 1 or 2", path, name)
+				}
+				if t.QoS == 0 {
+					t.QoS = 1
+				}
+				if t.ClientID == "" {
+					t.ClientID = "bifrost"
 				}
 			default:
 				return fmt.Errorf("%s: service %q: unknown target kind %q", path, name, t.Kind)

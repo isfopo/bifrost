@@ -57,6 +57,10 @@ func (d *Dispatcher) Deliver(oref config.ServiceRef, o *config.ToService, mapped
 		err2 = d.withRetries(o, func() error { return d.deliverHTTP(o, endpoint, body) })
 	case "caldav":
 		err2 = d.withRetries(o, func() error { return d.deliverCalDAV(o, endpoint, mapped) })
+	case "smtp":
+		err2 = d.withRetries(o, func() error { return d.deliverSMTP(o, endpoint, mapped) })
+	case "mqtt":
+		err2 = d.withRetries(o, func() error { return d.deliverMQTT(o, endpoint, mapped) })
 	default:
 		return fmt.Errorf("unknown target kind %q", o.Kind)
 	}

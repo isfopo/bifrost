@@ -5,7 +5,7 @@
 server.log
 server.err.log
 
-# Local config and secrets — mount the config, don't bake it
+# Local config and secrets - mount the config, don't bake it
 config.yaml
 config.*.yaml
 .env

@@ -1,14 +1,20 @@
 # syntax=docker/dockerfile:1
 
 # ---- Build stage --------------------------------------------------------
-FROM golang:1.24-alpine AS build
+# $BUILDPLATFORM: run the toolchain natively in CI and cross-compile with
+# GOOS/GOARCH (set by BuildKit via TARGETOS/TARGETARG) — no QEMU emulation.
+FROM --platform=$BUILDPLATFORM golang:1.24-alpine AS build
 WORKDIR /src
+
+ARG TARGETOS
+ARG TARGETARCH
 
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /bifrost ./cmd/bifrost
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+    go build -trimpath -ldflags="-s -w" -o /bifrost ./cmd/bifrost
 
 # ---- Runtime stage ------------------------------------------------------
 FROM alpine:3.21

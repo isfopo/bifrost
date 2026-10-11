@@ -142,7 +142,7 @@ func LoadConfig(path string) (*Config, error) {
 
 func (c *Config) validate(path string) error {
 	if c.Addr == "" {
-		c.Addr = ":8080"
+		c.Addr = ":45557"
 	}
 	if c.Services == nil {
 		c.Services = map[string]*Service{}

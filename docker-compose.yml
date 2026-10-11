@@ -18,9 +18,9 @@ services:
     # Prefer pinning for unattended hosts: image: ghcr.io/isfopo/bifrost:0.1.0
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "45557:45557"
     environment:
-      ADDR: ":8080"
+      ADDR: ":45557"
       # List every *_env key referenced in your config.yaml; remove the rest.
       PLANE_WEBHOOK_SECRET: ${PLANE_WEBHOOK_SECRET}
       CALDAV_USER: ${CALDAV_USER}

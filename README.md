@@ -15,7 +15,7 @@ running a full workflow engine.
 
 ```sh
 go build -o bifrost ./cmd/bifrost
-ADDR=:8080 ./bifrost            # CONFIG defaults to ./config.yaml
+./bifrost                       # CONFIG defaults to ./config.yaml
 ```
 
 ### Docker
@@ -39,7 +39,7 @@ the flow's endpoint (see below).
 Schema overview (`config.yaml`; secrets come from env, never the file):
 
 ```yaml
-addr: ":8080"
+addr: ":45557"
 
 services:
   plane:                        # reusable service definition
@@ -81,6 +81,11 @@ flows:
 - `endpoint` (on the `to` ref) — a static path, or a JSONata expression
   (anything containing `$`) evaluated against the *mapped* output.
 
+The default listen port is **45557** (`0xB1F5` in hex — leet-speak "BIF5",
+from **BIF**ro**S T**; chosen so Bifrost doesn't fight every other
+self-hosted service for 8080). Override it with the config `addr` or the
+`ADDR` env var.
+
 ### JSONata gotchas
 
 - The input document is `$`. Paths are `$.issue.title`.
@@ -105,7 +110,7 @@ flows:
 Example authoring loop:
 
 ```sh
-curl -s localhost:8080/hooks/foo-to-calendar/test \
+curl -s localhost:45557/hooks/foo-to-calendar/test \
   -H 'Content-Type: application/json' \
   -d '{"event":"issue.created","issue":{"id":"123","title":"Build shed"}}'
 ```

@@ -193,3 +193,9 @@ go vet ./...
 
 Roadmap ideas: event persistence + replay, config hot-reload, more adapters
 (HMAC providers presets), multi-source fanout per flow.
+
+## License
+
+[MIT](LICENSE) — free for any use; the sample hostnames, service names and
+credentials in `config.yaml` / `.env.example` are placeholders, nothing
+identifying is tracked.

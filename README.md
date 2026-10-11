@@ -15,7 +15,7 @@ running a full workflow engine.
 
 ```sh
 go build -o bifrost ./cmd/bifrost
-./bifrost                       # CONFIG defaults to ./config.yaml
+./bifrost                       # BIFROST_CONFIG defaults to ./config.yaml
 ```
 
 ### Docker
@@ -47,7 +47,7 @@ services:
       auth:
         type: hmac              # none | header | hmac
         header: X-Plane-Signature
-        secret_env: PLANE_WEBHOOK_SECRET
+        secret_env: BIFROST_PLANE_WEBHOOK_SECRET
         prefix: "sha256="
         encoding: hex           # hex (default) | base64
 
@@ -57,8 +57,8 @@ services:
       base_url: https://dav.internal/dav/james/calendars/projects/
       auth:
         type: basic             # none | bearer | basic
-        username_env: CALDAV_USER
-        password_env: CALDAV_PASS
+        username_env: BIFROST_CALDAV_USER
+        password_env: BIFROST_CALDAV_PASS
       timeout: 10s
       attempts: 3               # retries on 5xx/network errors, exp. backoff
 
@@ -86,7 +86,7 @@ letters of BIFROST: B=2, I=9, F=6, R=18). It's outside every default
 ephemeral port range (Linux 32768–60999, Windows 49152–65535), outside
 Kubernetes NodePort (30000–32767), and unassigned by IANA — so it won't
 collide with OS transient connections or anything you already host.
-Override it with the config `addr` or the `ADDR` env var.
+Override it with the config `addr` or the `BIFROST_ADDR` env var.
 
 ### JSONata gotchas
 
@@ -154,7 +154,7 @@ Example: high-priority Push events as email via SMTP:
 services:
   plane:
     from:
-      auth: {type: hmac, header: X-Plane-Signature, secret_env: PLANE_WEBHOOK_SECRET, prefix: "sha256="}
+      auth: {type: hmac, header: X-Plane-Signature, secret_env: BIFROST_PLANE_WEBHOOK_SECRET, prefix: "sha256="}
   mail:
     to:
       kind: smtp

@@ -26,7 +26,7 @@ RUN apk add --no-cache ca-certificates \
 COPY --from=build /bifrost /usr/local/bin/bifrost
 
 # Where the config file is mounted (see docker-compose.yml).
-ENV CONFIG=/config/config.yaml
+ENV BIFROST_CONFIG=/config/config.yaml
 
 USER bifrost
 EXPOSE 29618

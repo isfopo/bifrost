@@ -20,14 +20,16 @@ services:
     ports:
       - "29618:29618"
     environment:
-      ADDR: ":29618"
-      # List every *_env key referenced in your config.yaml; remove the rest.
-      PLANE_WEBHOOK_SECRET: ${PLANE_WEBHOOK_SECRET}
-      CALDAV_USER: ${CALDAV_USER}
-      CALDAV_PASS: ${CALDAV_PASS}
-      SMTP_USER: ${SMTP_USER}
-      SMTP_PASS: ${SMTP_PASS}
-      MQTT_USER: ${MQTT_USER}
-      MQTT_PASS: ${MQTT_PASS}
+      # Every *_env key referenced in your config.yaml needs an entry here.
+      # Only list the ones your config actually uses; remove the rest.
+      # Keep the BIFROST_ prefix so your .env can't clash with other tools.
+      BIFROST_ADDR: ":29618"
+      BIFROST_PLANE_WEBHOOK_SECRET: ${BIFROST_PLANE_WEBHOOK_SECRET}
+      BIFROST_CALDAV_USER: ${BIFROST_CALDAV_USER}
+      BIFROST_CALDAV_PASS: ${BIFROST_CALDAV_PASS}
+      BIFROST_SMTP_USER: ${BIFROST_SMTP_USER}
+      BIFROST_SMTP_PASS: ${BIFROST_SMTP_PASS}
+      BIFROST_MQTT_USER: ${BIFROST_MQTT_USER}
+      BIFROST_MQTT_PASS: ${BIFROST_MQTT_PASS}
     volumes:
       - ./config.yaml:/config/config.yaml:ro

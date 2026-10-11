@@ -1,7 +1,9 @@
 # Bifrost configuration.
 #
 # Secrets never live here: they are read from environment variables via
-# *_env fields (see .env.example / your compose file).
+# *_env fields (see .env.example / your compose file). Name them with a
+# BIFROST_ prefix (or similar) so they can't collide with variables set
+# for other tools sharing the same shell/env-file.
 #
 # Flow shape:  from (who sends the webhook) -> to (who receives it)
 # JSONata strings in 'when', 'map' and 'endpoint' are compiled at startup.
@@ -16,7 +18,7 @@ services:
   #     auth:
   #       type: hmac            # none | header | hmac
   #       header: X-Plane-Signature
-  #       secret_env: PLANE_WEBHOOK_SECRET
+  #       secret_env: BIFROST_PLANE_WEBHOOK_SECRET
   #       prefix: "sha256="        # strip this prefix before comparing
   #       encoding: hex            # hex (default) | base64
 
@@ -27,8 +29,8 @@ services:
   #     base_url: https://dav.internal/dav/james/calendars/projects/
   #     auth:
   #       type: basic
-  #       username_env: CALDAV_USER
-  #       password_env: CALDAV_PASS
+  #       username_env: BIFROST_CALDAV_USER
+  #       password_env: BIFROST_CALDAV_PASS
   #     timeout: 10s
   #     attempts: 3                # first try + retries on 5xx/network errors
 
@@ -44,8 +46,8 @@ services:
   #     tls: starttls               # none | starttls | tls (implicit, port 465)
   #     auth:
   #       type: basic
-  #       username_env: SMTP_USER
-  #       password_env: SMTP_PASS
+  #       username_env: BIFROST_SMTP_USER
+  #       password_env: BIFROST_SMTP_PASS
 
   # ---- MQTT target: publish the mapped payload (JSON) to a topic ----------
   # bus:
@@ -57,8 +59,8 @@ services:
   #     retain: false
   #     auth:                       # omit for anonymous brokers
   #       type: basic
-  #       username_env: MQTT_USER
-  #       password_env: MQTT_PASS
+  #       username_env: BIFROST_MQTT_USER
+  #       password_env: BIFROST_MQTT_PASS
 
   # ---- Generic HTTP target: -------------------------------------------------
   # ntfy:
@@ -67,7 +69,7 @@ services:
   #     url: https://ntfy.internal/alerts
   #     auth:
   #       type: bearer
-  #       token_env: NTFY_TOKEN
+  #       token_env: BIFROST_NTFY_TOKEN
   #     headers:
   #       X-Bifrost: "true"
 

@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	configPath := os.Getenv("CONFIG")
+	configPath := os.Getenv("BIFROST_CONFIG")
 	if configPath == "" {
 		configPath = "config.yaml"
 	}
@@ -26,7 +26,7 @@ func main() {
 		log.Fatalf("config error: %v", err)
 	}
 
-	addr := os.Getenv("ADDR")
+	addr := os.Getenv("BIFROST_ADDR")
 	if addr == "" {
 		addr = cfg.Addr
 	}

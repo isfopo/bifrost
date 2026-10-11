@@ -15,7 +15,7 @@
 services:
   bifrost:
     image: ghcr.io/isfopo/bifrost:latest
-    # Prefer pinning for unattended hosts: image: ghcr.io/isfopo/bifrost:0.1.0
+    # Prefer pinning for unattended hosts: image: ghcr.io/isfopo/bifrost:0.2.0
     restart: unless-stopped
     ports:
       - "29618:29618"

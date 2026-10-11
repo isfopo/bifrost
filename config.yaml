@@ -1,0 +1,82 @@
+# Bifrost configuration.
+#
+# Secrets never live here: they are read from environment variables via
+# *_env fields (see .env.example / your compose file).
+#
+# Flow shape:  from (who sends the webhook) -> to (who receives it)
+# JSONata strings in 'when', 'map' and 'endpoint' are compiled at startup.
+# Test mappings at https://try.jsonata.org or via POST /hooks/{flow}/test.
+
+addr: ":8080"
+
+services:
+  # ---- Example "from" service: Plane ---------------------------------------
+  # plane:
+  #   from:
+  #     auth:
+  #       type: hmac            # none | header | hmac
+  #       header: X-Plane-Signature
+  #       secret_env: PLANE_WEBHOOK_SECRET
+  #       prefix: "sha256="        # strip this prefix before comparing
+  #       encoding: hex            # hex (default) | base64
+
+  # ---- Example "to" service: CalDAV (Baikal/Nextcloud/Radicale...) ---------
+  # caldav:
+  #   to:
+  #     kind: caldav
+  #     base_url: https://dav.internal/dav/james/calendars/projects/
+  #     auth:
+  #       type: basic
+  #       username_env: CALDAV_USER
+  #       password_env: CALDAV_PASS
+  #     timeout: 10s
+  #     attempts: 3                # first try + retries on 5xx/network errors
+
+  # ---- Generic HTTP target: -------------------------------------------------
+  # ntfy:
+  #   to:
+  #     kind: http
+  #     url: https://ntfy.internal/alerts
+  #     auth:
+  #       type: bearer
+  #       token_env: NTFY_TOKEN
+  #     headers:
+  #       X-Bifrost: "true"
+
+  # ---- "log" writes the would-be payload to stdout; use it while authoring. -
+  hooklog:
+    to:
+      kind: log
+
+  # ---- Demo source with no auth (keep for local testing only) --------------
+  goals:
+    from:
+      auth:
+        type: none
+
+flows:
+  # Every webhook POST /hooks/goals-test runs through here.
+  goals-test:
+    from: { service: goals }     # goals: auth none, so this is demo material
+    to: { service: hooklog }
+    when: $.event = "goal.created"
+    map: |
+      {
+        "goal": $.goal.title,
+        "close": $.goal.target_date,
+        "summary": "Goal created in " & $.workspace.name & ": " & $.goal.title
+      }
+
+  # ---- Full Plane -> CalDAV example (uncomment after setting the secrets) ---
+  # plane-to-caldav:
+  #   from: { service: plane }
+  #   to: { service: caldav }
+  #   when: $.event = "issue.created"
+  #   map: |
+  #     {
+  #       "uid": $.issue.id,
+  #       "summary": $.issue.title,
+  #       "description": $.issue.description,
+  #       "due": $.issue.target_date,
+  #       "priority": 5
+  #     }

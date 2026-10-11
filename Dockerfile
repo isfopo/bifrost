@@ -29,9 +29,9 @@ COPY --from=build /bifrost /usr/local/bin/bifrost
 ENV CONFIG=/config/config.yaml
 
 USER bifrost
-EXPOSE 45557
+EXPOSE 29618
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s \
-  CMD wget -qO- http://127.0.0.1:45557/healthz >/dev/null 2>&1 || exit 1
+  CMD wget -qO- http://127.0.0.1:29618/healthz >/dev/null 2>&1 || exit 1
 
 ENTRYPOINT ["/usr/local/bin/bifrost"]

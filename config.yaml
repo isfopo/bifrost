@@ -7,7 +7,7 @@
 # JSONata strings in 'when', 'map' and 'endpoint' are compiled at startup.
 # Test mappings at https://try.jsonata.org or via POST /hooks/{flow}/test.
 
-addr: ":45557"
+addr: ":29618"
 
 services:
   # ---- Example "from" service: Plane ---------------------------------------

@@ -39,7 +39,7 @@ the flow's endpoint (see below).
 Schema overview (`config.yaml`; secrets come from env, never the file):
 
 ```yaml
-addr: ":45557"
+addr: ":29618"
 
 services:
   plane:                        # reusable service definition
@@ -81,10 +81,12 @@ flows:
 - `endpoint` (on the `to` ref) — a static path, or a JSONata expression
   (anything containing `$`) evaluated against the *mapped* output.
 
-The default listen port is **45557** (`0xB1F5` in hex — leet-speak "BIF5",
-from **BIF**ro**S T**; chosen so Bifrost doesn't fight every other
-self-hosted service for 8080). Override it with the config `addr` or the
-`ADDR` env var.
+The default listen port is **29618** (A1Z26 of **BIFR** — the first four
+letters of BIFROST: B=2, I=9, F=6, R=18). It's outside every default
+ephemeral port range (Linux 32768–60999, Windows 49152–65535), outside
+Kubernetes NodePort (30000–32767), and unassigned by IANA — so it won't
+collide with OS transient connections or anything you already host.
+Override it with the config `addr` or the `ADDR` env var.
 
 ### JSONata gotchas
 
@@ -110,7 +112,7 @@ self-hosted service for 8080). Override it with the config `addr` or the
 Example authoring loop:
 
 ```sh
-curl -s localhost:45557/hooks/foo-to-calendar/test \
+curl -s localhost:29618/hooks/foo-to-calendar/test \
   -H 'Content-Type: application/json' \
   -d '{"event":"issue.created","issue":{"id":"123","title":"Build shed"}}'
 ```

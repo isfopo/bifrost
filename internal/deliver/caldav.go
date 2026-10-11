@@ -35,8 +35,8 @@ func buildVTODO(mapped any) (string, string, error) {
 	b.WriteString("VERSION:2.0\r\n")
 	b.WriteString("PRODID:-//Bifrost//EN\r\n")
 	b.WriteString("BEGIN:VTODO\r\n")
-	b.WriteString("UID:" + uid + "\r\n")
-	b.WriteString("DTSTAMP:" + time.Now().UTC().Format(icalDateTime) + "\r\n")
+	fmt.Fprintf(&b, "UID:%s\r\n", uid)
+	fmt.Fprintf(&b, "DTSTAMP:%s\r\n", time.Now().UTC().Format(icalDateTime))
 
 	if v, ok := fields["summary"].(string); ok && v != "" {
 		writeICalLine(&b, "SUMMARY", v)
@@ -48,21 +48,22 @@ func buildVTODO(mapped any) (string, string, error) {
 		if line, err := icalDue(v); err != nil {
 			return "", "", fmt.Errorf("bad 'due' value %q: %w", v, err)
 		} else {
-			b.WriteString(line + "\r\n")
+			b.WriteString(line)
+			b.WriteString("\r\n")
 		}
 	}
 	if v, ok := fields["status"].(string); ok && v != "" {
-		b.WriteString("STATUS:" + sanitizeICal(v) + "\r\n")
+		fmt.Fprintf(&b, "STATUS:%s\r\n", sanitizeICal(v))
 	}
 	if priority, err := intField(fields, "priority"); err != nil {
 		return "", "", err
 	} else if priority != 0 {
-		b.WriteString(fmt.Sprintf("PRIORITY:%d\r\n", priority))
+		fmt.Fprintf(&b, "PRIORITY:%d\r\n", priority)
 	}
 	if percent, err := intField(fields, "percent"); err != nil {
 		return "", "", err
 	} else if percent != 0 {
-		b.WriteString(fmt.Sprintf("PERCENT-COMPLETE:%d\r\n", percent))
+		fmt.Fprintf(&b, "PERCENT-COMPLETE:%d\r\n", percent)
 	}
 
 	b.WriteString("END:VTODO\r\n")
@@ -134,6 +135,8 @@ func writeICalLine(b *strings.Builder, name, value string) {
 			esc.WriteRune(r)
 		}
 	}
+	// The concatenation here is not avoidable waste: fold() needs the total
+	// line (name + value) to measure and wrap it at 75 octets.
 	fold(b, name+":"+esc.String())
 }
 

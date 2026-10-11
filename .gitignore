@@ -5,3 +5,4 @@
 server.log
 server.err.log
 .env
+.serena/

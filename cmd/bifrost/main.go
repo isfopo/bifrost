@@ -1,4 +1,4 @@
-// Bifrost is a self-hostable webhook bridge. See README.md.
+// Bifrost is a self-hosted webhook bridge. See README.md.
 package main
 
 import (

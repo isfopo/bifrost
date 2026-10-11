@@ -20,6 +20,15 @@ ADDR=:8080 ./bifrost            # CONFIG defaults to ./config.yaml
 
 ### Docker
 
+From the published image — no source, no build:
+
+```sh
+cp .env.example .env            # fill in secrets
+docker compose -f docker-compose.example.yml up -d
+```
+
+Building from source instead (e.g. your own fork):
+
 ```sh
 cp .env.example .env            # fill in secrets
 docker compose up -d --build

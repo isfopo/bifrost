@@ -1,0 +1,28 @@
+# Bifrost from the published container image — no build needed.
+#
+# This is the "self-host without the source" variant of docker-compose.yml.
+# Pulls from GitHub Container Registry; if the package is public this needs
+# no auth, otherwise run `docker login ghcr.io`.
+#
+# When you fork Bifrost and want your own builds, use docker-compose.yml
+# (which builds locally) or the ghcr.io/<you>/bifrost image instead.
+services:
+  bifrost:
+    image: ghcr.io/isfopo/bifrost:latest
+    # Prefer pinning: image: ghcr.io/isfopo/bifrost:0.1.0
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      ADDR: ":8080"
+      # Every *_env key referenced in your config.yaml needs an entry here.
+      # Only list the ones your config actually uses; remove the rest.
+      PLANE_WEBHOOK_SECRET: ${PLANE_WEBHOOK_SECRET}
+      CALDAV_USER: ${CALDAV_USER}
+      CALDAV_PASS: ${CALDAV_PASS}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      MQTT_USER: ${MQTT_USER}
+      MQTT_PASS: ${MQTT_PASS}
+    volumes:
+      - ./config.yaml:/config/config.yaml:ro

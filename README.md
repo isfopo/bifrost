@@ -20,19 +20,15 @@ ADDR=:8080 ./bifrost            # CONFIG defaults to ./config.yaml
 
 ### Docker
 
-From the published image — no source, no build:
-
 ```sh
-cp .env.example .env            # fill in secrets
-docker compose -f docker-compose.example.yml up -d
+cp .env.example .env            # fill in the secrets your config.yaml references
+docker compose up -d
 ```
 
-Building from source instead (e.g. your own fork):
-
-```sh
-cp .env.example .env            # fill in secrets
-docker compose up -d --build
-```
+Runs the published image (`ghcr.io/isfopo/bifrost`, pin a version tag in
+`docker-compose.yml` for unattended hosts). For building your own fork:
+replace the `image:` line and use `docker compose up -d --build` — the
+`Dockerfile` is the same one CI publishes from.
 
 The sample `config.yaml` ships with a **log** target so you can verify plumbing
 before pointing anything at a real service. Open the log target by POSTing to

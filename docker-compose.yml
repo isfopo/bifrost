@@ -1,19 +1,33 @@
-# Bifrost — self-hosted webhook bridge with declarative mappings.
+# Bifrost from the published image: ghcr.io/isfopo/bifrost.
 #
-# Secrets are injected from .env (compose auto-loads it) or the shell.
-# Copy .env.example to .env and fill it in.
+# Start:  cp .env.example .env  (fill in the values your config.yaml references)
+#         docker compose up -d
+#
+# Building your own image instead (forks, tweaks)?  The Dockerfile is the
+# single source of truth — CI uses it too:
+#   docker build -t bifrost . && docker compose up -d
+# ...after replacing `image:` below, or run compose with:
+#   docker compose up -d --build
+#
+# Services and flows live in ./config.yaml; secrets never do — the *_env
+# keys in config.yaml are read from the environment (compose auto-loads .env).
+
 services:
   bifrost:
-    build: .
-    image: bifrost:latest
+    image: ghcr.io/isfopo/bifrost:latest
+    # Prefer pinning for unattended hosts: image: ghcr.io/isfopo/bifrost:0.1.0
     restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
       ADDR: ":8080"
-      # List every *_env secret your config.yaml references:
+      # List every *_env key referenced in your config.yaml; remove the rest.
       PLANE_WEBHOOK_SECRET: ${PLANE_WEBHOOK_SECRET}
       CALDAV_USER: ${CALDAV_USER}
       CALDAV_PASS: ${CALDAV_PASS}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      MQTT_USER: ${MQTT_USER}
+      MQTT_PASS: ${MQTT_PASS}
     volumes:
       - ./config.yaml:/config/config.yaml:ro

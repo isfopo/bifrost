@@ -1,0 +1,151 @@
+# Bifrost
+
+Bifrost is a small, self-hostable webhook bridge: services can't call each
+other's APIs directly, so Bifrost receives a webhook from one service
+(`from`), optionally filters it, reshapes it with a declarative mapping, and
+delivers it to another (`to`). The event machinery is generic — all
+specificity lives in `config.yaml`.
+
+Built for homelab wiring like **Plane → CalDAV** or **Donetick → CalDAV** without
+running a full workflow engine.
+
+## Quickstart
+
+### Local
+
+```sh
+go build -o bifrost ./cmd/bifrost
+ADDR=:8080 ./bifrost            # CONFIG defaults to ./config.yaml
+```
+
+### Docker
+
+```sh
+cp .env.example .env            # fill in secrets
+docker compose up -d --build
+```
+
+The sample `config.yaml` ships with a **log** target so you can verify plumbing
+before pointing anything at a real service. Open the log target by POSTing to
+the flow's endpoint (see below).
+
+## Configuration
+
+Schema overview (`config.yaml`; secrets come from env, never the file):
+
+```yaml
+addr: ":8080"
+
+services:
+  plane:                        # reusable service definition
+    from:                       # how inbound webhooks from it are verified
+      auth:
+        type: hmac              # none | header | hmac
+        header: X-Plane-Signature
+        secret_env: PLANE_WEBHOOK_SECRET
+        prefix: "sha256="
+        encoding: hex           # hex (default) | base64
+
+  caldav:
+    to:                         # how Bifrost delivers to it
+      kind: caldav              # log | http | caldav
+      base_url: https://dav.internal/dav/james/calendars/projects/
+      auth:
+        type: basic             # none | bearer | basic
+        username_env: CALDAV_USER
+        password_env: CALDAV_PASS
+      timeout: 10s
+      attempts: 3               # retries on 5xx/network errors, exp. backoff
+
+flows:
+  plane-to-caldav:
+    from: {service: plane}
+    to:   {service: caldav}     # optional endpoint: <path or JSONata expr>
+    when: $.event = "issue.created"    # optional JSONata filter
+    map: |
+      {
+        "uid": $.issue.id,
+        "summary": $.issue.title,
+        "description": $.issue.description,
+        "due": $.issue.target_date
+      }
+```
+
+- `when` — a JSONata boolean expression; a flow without one matches everything.
+- `map` — a JSONata expression that builds the outgoing body from the event.
+- `endpoint` (on the `to` ref) — a static path, or a JSONata expression
+  (anything containing `$`) evaluated against the *mapped* output.
+
+### JSONata gotchas
+
+- The input document is `$`. Paths are `$.issue.title`.
+- **`$event` is wrong** — that reads *a variable* named `event` (undefined).
+  Use `$.event` for top-level fields. Test expressions at
+  [try.jsonata.org](https://try.jsonata.org) or with the `/test` endpoint.
+- `map` must produce a JSON object or array. For `kind: caldav` the object
+  needs `uid`, and may include `summary`, `description`, `due` (`YYYY-MM-DD`
+  or RFC3339), `status`, `priority` (1–9), `percent` (0–100).
+- Config (and its expressions) is compiled once at startup; a syntax error
+  fails fast instead of half-serving.
+
+## Endpoints
+
+| Route | Purpose |
+|---|---|
+| `POST /hooks/{flow}` | Inbound webhook for a flow. Auth per the flow's `from` service; returns 202 for non-matching events, 200 on delivery. |
+| `POST /hooks/{flow}/test` | Dry run: returns `{matched, payload}` — the authoring loop. Bypasses auth by design; add `?execute=true` to actually deliver. |
+| `GET /healthz` | Health (used by the Docker healthcheck). |
+| `GET /` | Status + flow list. |
+
+Example authoring loop:
+
+```sh
+curl -s localhost:8080/hooks/foo-to-calendar/test \
+  -H 'Content-Type: application/json' \
+  -d '{"event":"issue.created","issue":{"id":"123","title":"Build shed"}}'
+```
+
+## Targets
+
+- **`kind: log`** — writes the would-be payload to stdout; zero risk while
+  developing a new mapping.
+- **`kind: http`** — generic request; `url` or `base_url` + `endpoint`,
+  custom `headers`, `method` (default POST), bearer/basic auth. Body is the
+  mapped JSON.
+- **`kind: caldav`** — PUTs a VTODO object to `<base_url>/<endpoint or
+  `<uid>.ics`>` with `Content-Type: text/calendar`, `If-None-Match: *`.
+  A 412 (UID already exists) is treated as success, so retries/replays are
+  idempotent. Works with Baikal, Nextcloud, Radicale, ...
+
+Retries: first try + `attempts-1` retries with exponential backoff (0.5s base)
+on network errors and 5xx only. 4xx responses fail the delivery — that's a
+config or auth problem, not a transient one.
+
+## Security notes
+
+- Inbound auth is per-service: HMAC-SHA256 (provider-style headers, optional
+  value prefixes), static header token, or none.
+- Outbound requests to non-loopback hosts must be HTTPS (loopback is allowed
+  so you can test against local services).
+- Secrets are only read from environment variables at startup.
+- `/test` deliberately bypasses auth — keep the management surface
+  (`/`, `/hooks/*/test`) off the public internet.
+
+## Development
+
+```sh
+go test ./...     # unit tests cover auth, routing, mapping, CalDAV output
+go vet ./...
+
+# Layout (standard Go app conventions):
+#   cmd/bifrost/main.go     entrypoint — thin; startup + graceful shutdown only
+#   internal/config/        YAML schema, load, validation, secret resolution
+#   internal/auth/          inbound webhook verification (none/header/hmac)
+#   internal/flow/          JSONata compile + eval: when / map / endpoint
+#   internal/deliver/       outbound adapters: log, http, caldav (VTODO)
+#   internal/server/        HTTP wiring, handlers, request pipeline
+#   internal/               may only be imported within this module
+```
+
+Roadmap ideas: event persistence + replay, config hot-reload, more adapters
+(HMAC providers presets), multi-source fanout per flow.

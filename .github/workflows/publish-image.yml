@@ -8,7 +8,7 @@
 # make it public once (user/org -> Packages -> bifrost -> settings) if you
 # want pull-only access for other hosts without a token.
 
-name: docker
+name: publish-image
 
 on:
   push:
